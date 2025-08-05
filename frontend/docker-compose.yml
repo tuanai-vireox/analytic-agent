@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  librechat:
+    image: ghcr.io/danny-avila/librechat:latest
+    container_name: librechat-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # LibreChat Configuration
+      - HOST=0.0.0.0
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_here}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-your_refresh_secret_here}
+      
+      # Database Configuration
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:27017/librechat}
+      
+      # API Configuration
+      - API_BASE_URL=${API_BASE_URL:-http://backend:8000}
+      - API_KEY=${API_KEY:-your_api_key_here}
+      
+      # OpenAI Configuration
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4}
+      
+      # Security
+      - ALLOW_REGISTRATION=${ALLOW_REGISTRATION:-true}
+      - ALLOW_SOCIAL_LOGIN=${ALLOW_SOCIAL_LOGIN:-false}
+      - ALLOW_ANONYMOUS_CHAT=${ALLOW_ANONYMOUS_CHAT:-false}
+      
+      # Features
+      - ENABLE_ANALYTICS=${ENABLE_ANALYTICS:-true}
+      - ENABLE_FILE_UPLOAD=${ENABLE_FILE_UPLOAD:-true}
+      - MAX_FILE_SIZE=${MAX_FILE_SIZE:-10485760}
+      - ENABLE_WEBSOCKET=${ENABLE_WEBSOCKET:-true}
+      
+      # Custom Endpoints for Analytic Agent
+      - CUSTOM_ENDPOINTS=${CUSTOM_ENDPOINTS:-true}
+      - ANALYSIS_ENDPOINT=${ANALYSIS_ENDPOINT:-http://backend:8000/api/v1/analysis}
+      - CHAT_ENDPOINT=${CHAT_ENDPOINT:-http://backend:8000/api/v1/chat}
+      
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DEBUG=${DEBUG:-false}
+      
+    volumes:
+      - librechat_data:/app/uploads
+      - ./config:/app/config
+      
+    depends_on:
+      - mongo
+      
+    networks:
+      - analytic-agent-network
+
+  mongo:
+    image: mongo:7
+    container_name: librechat-mongo
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-password}
+      - MONGO_INITDB_DATABASE=${MONGO_DATABASE:-librechat}
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    ports:
+      - "27017:27017"
+    networks:
+      - analytic-agent-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: librechat-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - analytic-agent-network
+
+volumes:
+  librechat_data:
+  mongo_data:
+  redis_data:
+
+networks:
+  analytic-agent-network:
+    external: true 

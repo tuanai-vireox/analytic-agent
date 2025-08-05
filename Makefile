@@ -113,4 +113,56 @@ dev: dev-setup
 	docker-compose up -d db redis
 	sleep 5
 	make init-db
-	make run 
+	make run
+
+# Backend development
+backend-dev:
+	cd backend && make dev
+
+# Frontend development
+frontend-dev:
+	cd frontend && docker-compose up -d
+
+# Full stack development
+full-dev:
+	docker-compose -f docker-compose.dev.yml up -d
+
+# Production deployment
+prod:
+	docker-compose up -d --build
+
+# Stop all services
+stop:
+	docker-compose down
+	docker-compose -f docker-compose.dev.yml down
+
+# View logs
+logs:
+	docker-compose logs -f
+
+# Backend logs
+backend-logs:
+	docker-compose logs -f backend
+
+# Frontend logs
+frontend-logs:
+	docker-compose logs -f frontend
+
+# Database management
+db-shell:
+	docker-compose exec db psql -U analytic_user -d analytic_agent
+
+# Initialize database
+init-db:
+	cd backend && make init-db
+
+# Run migrations
+migrate:
+	cd backend && make migrate
+
+# Health check
+health:
+	@echo "Checking backend health..."
+	@curl -f http://localhost:8000/api/v1/health/ || echo "Backend not responding"
+	@echo "Checking frontend health..."
+	@curl -f http://localhost:3000/health || echo "Frontend not responding" 

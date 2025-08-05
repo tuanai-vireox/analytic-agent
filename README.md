@@ -1,54 +1,63 @@
 # Analytic Agent
 
-A powerful analytic agent built with CrewAI and FastAPI that can perform complex data analysis tasks using AI agents.
+A powerful analytic agent built with CrewAI and FastAPI backend, featuring a LibreChat frontend for interactive chat-based analysis.
 
 ## Features
 
 - 🤖 Multi-agent AI system using CrewAI
-- 🚀 FastAPI REST API for easy integration
+- 🚀 FastAPI REST API backend
+- 💬 Interactive chat interface with LibreChat
 - 📊 Advanced data analysis capabilities
 - 🔄 Asynchronous task processing
 - 📝 Comprehensive logging and monitoring
 - 🧪 Full test coverage
-- 🐳 Docker support
+- 🐳 Docker support with docker-compose
 - ⚡ Fast package management with uv
 
 ## Project Structure
 
 ```
 analytic-agent/
-├── app/
-│   ├── __init__.py
-│   ├── main.py                 # FastAPI application entry point
-│   ├── config.py               # Configuration settings
-│   ├── database.py             # Database connection and session
-│   ├── models/                 # SQLAlchemy models
-│   ├── schemas/                # Pydantic schemas
-│   ├── api/                    # API routes
-│   ├── services/               # Business logic
-│   ├── agents/                 # CrewAI agents
-│   └── utils/                  # Utility functions
-├── tests/                      # Test files
-├── alembic/                    # Database migrations
-├── docker/                     # Docker configuration
-├── scripts/                    # Utility scripts
-├── pyproject.toml             # Project configuration and dependencies
-├── uv.lock                    # Locked dependencies (uv)
-├── .env.example               # Environment variables template
-├── docker-compose.yml         # Docker compose configuration
-└── README.md                  # This file
+├── backend/                    # FastAPI backend application
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py            # FastAPI application entry point
+│   │   ├── config.py          # Configuration settings
+│   │   ├── database.py        # Database connection and session
+│   │   ├── models/            # SQLAlchemy models
+│   │   ├── schemas/           # Pydantic schemas
+│   │   ├── api/               # API routes
+│   │   ├── services/          # Business logic
+│   │   ├── agents/            # CrewAI agents
+│   │   └── utils/             # Utility functions
+│   ├── tests/                 # Backend test files
+│   ├── alembic/               # Database migrations
+│   ├── scripts/               # Backend utility scripts
+│   ├── pyproject.toml         # Backend dependencies
+│   ├── uv.lock               # Locked dependencies
+│   ├── Dockerfile            # Backend Docker image
+│   └── .env.example          # Backend environment variables
+├── frontend/                  # LibreChat frontend
+│   ├── docker-compose.yml    # LibreChat configuration
+│   ├── .env.example          # Frontend environment variables
+│   └── README.md             # Frontend documentation
+├── docker-compose.yml        # Main docker-compose for full stack
+├── docker-compose.dev.yml    # Development docker-compose
+├── .env.example              # Main environment variables
+├── Makefile                  # Project-wide commands
+└── README.md                 # This file
 ```
 
 ## Quick Start
 
 ### Prerequisites
 
-- Python 3.9+
+- Docker and Docker Compose
+- Python 3.9+ (for local development)
 - uv (recommended) or pip
-- PostgreSQL (optional, for production)
 - OpenAI API key
 
-### Installation
+### Full Stack Deployment (Recommended)
 
 1. Clone the repository:
 ```bash
@@ -56,95 +65,124 @@ git clone <repository-url>
 cd analytic-agent
 ```
 
-2. Install uv (if not already installed):
-```bash
-# On macOS and Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# On Windows
-powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
-
-3. Install dependencies:
-```bash
-# Using uv (recommended)
-uv sync
-
-# Or using pip
-pip install -r requirements.txt
-```
-
-4. Set up environment variables:
+2. Set up environment variables:
 ```bash
 cp .env.example .env
 # Edit .env with your configuration
 ```
 
-5. Run the application:
-```bash
-# Using uv
-uv run uvicorn app.main:app --reload
-
-# Or using make
-make run
-```
-
-The API will be available at `http://localhost:8000`
-
-### Docker Setup
-
+3. Deploy the full stack:
 ```bash
 docker-compose up -d
 ```
 
-## Package Management with uv
+4. Access the applications:
+- **LibreChat Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/docs
 
-This project uses [uv](https://github.com/astral-sh/uv) for fast Python package management. Key commands:
+### Development Setup
+
+#### Backend Development
 
 ```bash
-# Install dependencies
-uv sync
+cd backend
 
-# Install with dev dependencies
-uv sync --extra dev
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Add a new dependency
-uv add package-name
+# Set up development environment
+make setup-dev
 
-# Add a dev dependency
-uv add --dev package-name
-
-# Run commands in the virtual environment
-uv run python script.py
-uv run pytest
-uv run uvicorn app.main:app --reload
+# Run the backend
+make run
 ```
 
-## API Documentation
+#### Frontend Development
 
-Once the application is running, you can access:
-- Interactive API docs: `http://localhost:8000/docs`
-- ReDoc documentation: `http://localhost:8000/redoc`
+```bash
+cd frontend
 
-## Usage Examples
+# Start LibreChat in development mode
+docker-compose -f docker-compose.dev.yml up -d
+```
 
-### Basic Analysis Request
+## Architecture
 
-```python
-import requests
+### Backend (FastAPI + CrewAI)
+- **FastAPI** - High-performance web framework
+- **CrewAI** - Multi-agent AI orchestration
+- **PostgreSQL** - Primary database
+- **Redis** - Caching and task queue
+- **SQLAlchemy** - ORM for database operations
 
-# Submit an analysis task
-response = requests.post("http://localhost:8000/api/v1/analysis", json={
-    "query": "Analyze the sales data for Q4 2023",
-    "data_source": "sales_data.csv",
-    "analysis_type": "trend_analysis"
-})
+### Frontend (LibreChat)
+- **LibreChat** - Open-source chat interface
+- **React** - Frontend framework
+- **WebSocket** - Real-time communication
+- **Custom API Integration** - Connects to backend services
 
-task_id = response.json()["task_id"]
+## API Integration
 
-# Check task status
-status_response = requests.get(f"http://localhost:8000/api/v1/analysis/{task_id}")
-print(status_response.json())
+The LibreChat frontend is configured to communicate with the backend API through:
+
+- **Chat Endpoints**: `/api/v1/chat/`
+- **Analysis Endpoints**: `/api/v1/analysis/`
+- **User Management**: `/api/v1/users/`
+
+## Docker Compose Services
+
+### Production Stack
+- `backend` - FastAPI application
+- `frontend` - LibreChat interface
+- `db` - PostgreSQL database
+- `redis` - Redis cache
+- `nginx` - Reverse proxy (optional)
+
+### Development Stack
+- `backend-dev` - Backend with hot reload
+- `frontend-dev` - LibreChat with development settings
+- `db` - PostgreSQL database
+- `redis` - Redis cache
+
+## Configuration
+
+### Environment Variables
+
+#### Main Configuration (.env)
+```bash
+# Application Settings
+APP_NAME=Analytic Agent
+APP_VERSION=1.0.0
+ENVIRONMENT=production
+
+# Database
+DATABASE_URL=postgresql://user:password@db:5432/analytic_agent
+
+# OpenAI
+OPENAI_API_KEY=your_openai_api_key
+
+# Security
+SECRET_KEY=your_secret_key
+
+# LibreChat
+LIBRECHAT_API_KEY=your_librechat_api_key
+```
+
+#### Backend Configuration (backend/.env)
+```bash
+# Backend-specific settings
+DEBUG=False
+LOG_LEVEL=INFO
+CREWAI_VERBOSE=False
+```
+
+#### Frontend Configuration (frontend/.env)
+```bash
+# LibreChat settings
+HOST=0.0.0.0
+PORT=3000
+JWT_SECRET=your_jwt_secret
 ```
 
 ## Development
@@ -152,42 +190,76 @@ print(status_response.json())
 ### Running Tests
 
 ```bash
-# Using uv
-uv run pytest
+# Backend tests
+cd backend && make test
 
-# Or using make
-make test
+# Frontend tests (if applicable)
+cd frontend && npm test
 ```
 
-### Code Formatting
+### Code Quality
 
 ```bash
-# Using uv
-uv run black .
-uv run isort .
+# Backend
+cd backend && make lint
+cd backend && make format
 
-# Or using make
-make format
+# Frontend
+cd frontend && npm run lint
+cd frontend && npm run format
 ```
 
-### Type Checking
+### Database Management
 
 ```bash
-# Using uv
-uv run mypy app/
+# Create migration
+cd backend && make migration message="description"
 
-# Or using make
-make lint
+# Run migrations
+cd backend && make migrate
+
+# Initialize database
+cd backend && make init-db
 ```
 
-### Installing Development Dependencies
+## Deployment
+
+### Production Deployment
 
 ```bash
-# Using uv
-uv sync --extra dev
+# Build and deploy
+docker-compose -f docker-compose.yml up -d --build
 
-# Or using make
-make install-dev
+# View logs
+docker-compose logs -f
+
+# Scale services
+docker-compose up -d --scale backend=3
+```
+
+### Development Deployment
+
+```bash
+# Development stack
+docker-compose -f docker-compose.dev.yml up -d
+
+# With hot reload
+docker-compose -f docker-compose.dev.yml up -d backend-dev
+```
+
+## Monitoring and Logs
+
+```bash
+# View all logs
+docker-compose logs -f
+
+# View specific service logs
+docker-compose logs -f backend
+docker-compose logs -f frontend
+
+# Health checks
+curl http://localhost:8000/api/v1/health/
+curl http://localhost:3000/health
 ```
 
 ## Contributing

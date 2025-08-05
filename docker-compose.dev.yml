@@ -1,0 +1,174 @@
+version: '3.8'
+
+services:
+  # Backend Service (Development)
+  backend-dev:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: analytic-agent-backend-dev
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Application Settings
+      - APP_NAME=Analytic Agent
+      - APP_VERSION=1.0.0
+      - ENVIRONMENT=development
+      - DEBUG=true
+      
+      # Database Settings
+      - DATABASE_URL=postgresql://analytic_user:analytic_password@db:5432/analytic_agent
+      - DATABASE_ECHO=true
+      
+      # OpenAI Settings
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4}
+      - OPENAI_TEMPERATURE=${OPENAI_TEMPERATURE:-0.7}
+      - OPENAI_MAX_TOKENS=${OPENAI_MAX_TOKENS:-4000}
+      
+      # CrewAI Settings
+      - CREWAI_VERBOSE=${CREWAI_VERBOSE:-true}
+      - CREWAI_MEMORY=${CREWAI_MEMORY:-true}
+      - CREWAI_MAX_ITERATIONS=${CREWAI_MAX_ITERATIONS:-3}
+      
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
+      
+      # Security
+      - SECRET_KEY=${SECRET_KEY}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      
+      # File Upload
+      - MAX_FILE_SIZE=${MAX_FILE_SIZE:-10485760}
+      - UPLOAD_DIR=./uploads
+      
+      # Redis
+      - REDIS_URL=redis://redis:6379/0
+      
+    volumes:
+      - ./backend:/app
+      - backend_uploads:/app/uploads
+      - ./backend/logs:/app/logs
+      
+    depends_on:
+      - db
+      - redis
+      
+    networks:
+      - analytic-agent-network
+      
+    command: ["uv", "run", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+
+  # Frontend Service (Development)
+  frontend-dev:
+    image: ghcr.io/danny-avila/librechat:latest
+    container_name: librechat-frontend-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # LibreChat Configuration
+      - HOST=0.0.0.0
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      
+      # Database Configuration
+      - MONGODB_URI=mongodb://mongo:27017/librechat
+      
+      # API Configuration
+      - API_BASE_URL=http://backend-dev:8000
+      - API_KEY=${API_KEY}
+      
+      # OpenAI Configuration
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4}
+      
+      # Security
+      - ALLOW_REGISTRATION=${ALLOW_REGISTRATION:-true}
+      - ALLOW_SOCIAL_LOGIN=${ALLOW_SOCIAL_LOGIN:-false}
+      - ALLOW_ANONYMOUS_CHAT=${ALLOW_ANONYMOUS_CHAT:-true}
+      
+      # Features
+      - ENABLE_ANALYTICS=${ENABLE_ANALYTICS:-true}
+      - ENABLE_FILE_UPLOAD=${ENABLE_FILE_UPLOAD:-true}
+      - MAX_FILE_SIZE=${MAX_FILE_SIZE:-10485760}
+      - ENABLE_WEBSOCKET=${ENABLE_WEBSOCKET:-true}
+      
+      # Custom Endpoints for Analytic Agent
+      - CUSTOM_ENDPOINTS=${CUSTOM_ENDPOINTS:-true}
+      - ANALYSIS_ENDPOINT=http://backend-dev:8000/api/v1/analysis
+      - CHAT_ENDPOINT=http://backend-dev:8000/api/v1/chat
+      
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
+      - DEBUG=${DEBUG:-true}
+      
+    volumes:
+      - frontend_uploads:/app/uploads
+      - ./frontend/config:/app/config
+      
+    depends_on:
+      - mongo
+      - backend-dev
+      
+    networks:
+      - analytic-agent-network
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15
+    container_name: analytic-agent-db-dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=analytic_agent
+      - POSTGRES_USER=analytic_user
+      - POSTGRES_PASSWORD=analytic_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./backend/alembic:/docker-entrypoint-initdb.d
+    networks:
+      - analytic-agent-network
+
+  # MongoDB (for LibreChat)
+  mongo:
+    image: mongo:7
+    container_name: librechat-mongo-dev
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-password}
+      - MONGO_INITDB_DATABASE=${MONGO_DATABASE:-librechat}
+    volumes:
+      - mongo_data_dev:/data/db
+      - ./frontend/mongo-init:/docker-entrypoint-initdb.d
+    ports:
+      - "27017:27017"
+    networks:
+      - analytic-agent-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: analytic-agent-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    networks:
+      - analytic-agent-network
+
+volumes:
+  postgres_data_dev:
+  mongo_data_dev:
+  redis_data_dev:
+  backend_uploads:
+  frontend_uploads:
+
+networks:
+  analytic-agent-network:
+    driver: bridge 
