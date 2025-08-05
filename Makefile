@@ -92,9 +92,21 @@ dev-setup: install
 	@echo "Please edit .env file with your configuration"
 	@echo "Then run: make init-db"
 
+# Complete development setup
+setup-dev:
+	uv run python scripts/setup_dev.py
+
 # Install dev dependencies
 install-dev:
 	uv sync --extra dev
+
+# Setup pre-commit hooks
+pre-commit-setup:
+	uv run pre-commit install
+
+# Run pre-commit on all files
+pre-commit:
+	uv run pre-commit run --all-files
 
 # Full development environment
 dev: dev-setup
