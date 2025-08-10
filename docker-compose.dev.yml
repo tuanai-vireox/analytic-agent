@@ -75,6 +75,7 @@ services:
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       
       # Database Configuration
+      - MONGO_URI=mongodb://mongo:27017/librechat
       - MONGODB_URI=mongodb://mongo:27017/librechat
       
       # API Configuration

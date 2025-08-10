@@ -125,16 +125,22 @@ frontend-dev:
 
 # Full stack development
 full-dev:
+	docker network create analytic-agent-network 2>/dev/null || true
 	docker-compose -f docker-compose.dev.yml up -d
 
 # Production deployment
 prod:
+	docker network create analytic-agent-network 2>/dev/null || true
 	docker-compose up -d --build
 
 # Stop all services
 stop:
 	docker-compose down
 	docker-compose -f docker-compose.dev.yml down
+
+# Clean up networks
+cleanup:
+	docker network rm analytic-agent-network 2>/dev/null || true
 
 # View logs
 logs:

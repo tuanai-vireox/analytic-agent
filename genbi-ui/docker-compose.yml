@@ -13,8 +13,10 @@ services:
       - PORT=3000
       - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_here}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-your_refresh_secret_here}
+      - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/librechat}
       
       # Database Configuration
+      - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/librechat}
       - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:27017/librechat}
       
       # API Configuration
@@ -60,6 +62,7 @@ services:
     container_name: librechat-mongo
     restart: unless-stopped
     environment:
+      - MONGO_URI=${MONGO_URI}
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME:-admin}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-password}
       - MONGO_INITDB_DATABASE=${MONGO_DATABASE:-librechat}
@@ -89,4 +92,4 @@ volumes:
 
 networks:
   analytic-agent-network:
-    external: true 
+    driver: bridge 
